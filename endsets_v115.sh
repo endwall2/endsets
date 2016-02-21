@@ -197,8 +197,6 @@ echo 0 > /proc/sys/net/ipv6/conf/all/accept_source_route                # don't 
 ipset flush
 ipset destroy
 
-ipset destroy ipv6_blacklist
-
 ipset create blacklist hash:net hashsize 65536 
 ipset create http_blacklist hash:net hashsize 65536   
 ipset create smtp_blacklist hash:net hashsize 65536 
