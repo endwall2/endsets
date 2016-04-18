@@ -2,7 +2,7 @@
 ##################################################################
 # Program: endsets.sh
 # Type: Bourne shell script
-# Current Version: 1.17
+# Current Version: 1.19
 # Date: February 23 2016
 # Stable Version: 1.14
 # Date: February 17 2016
@@ -10,11 +10,12 @@
 #
 # Description: Loads ipsets, blacklists and whitelists into iptables
 #              
-# Notes:  This script does not save it's rules and is ephemeral on reboot
-#         !!DO NOT ATTEMPT TO MAKE THIS SAVE THE RULES YET!!
-#         - I am looking into fixing this
-#
-# Change Log: - Fixed some style issues
+# Notes:  This script can be modified to  not save it's rules 
+#         and be ephemeral on reboot
+#        
+# Change Log: - moved booleans to /etc/sysctl.conf (removed from script)
+#             - Added save persistence
+#             - Fixed some style issues
 #             - Fixed the Logging problem (reverse order of log and drop due to insert)
 #             - Use && to execute log and drop rules in parallel (multiprocess)
 #             - Fixed ip error in ipv6 blacklist 
@@ -96,18 +97,28 @@
 # # ipset add http_whitelist 198.252.153.0/24
 # # ipset add smtp_whitelist 198.252.153.0/24
 #
+################################################################################################
+#                          ENABLE IPTABLES/IP6TABLES 
+#################################################################################################
+# systemd commands:
+# systemctl enable iptables
+# systemctl enable ip6tables
+# systemctl enable iptables.service
+# systemctl enable ip6tables.service
+# systemctl restart iptables
+# systemctl restart ip6tables
+####################################################################################################
+#                          ENABLE IPSET 
+#W################################################################################################
+# systemctl enable ipset.service
+# systemctl start ipset
+# systemctl restart ipset
+##################################################################################################
 ######################################################################################################
 #                           GLOBAL VARIABLES
 #######################################################################################################
 iptables=/sbin/iptables
 ip6tables=/sbin/ip6tables
-
-#systemctl enable iptables
-#systemctl enable ip6tables
-#systemctl enable iptables.service
-#systemctl enable ip6tables.service
-#systemctl restart iptablees
-#systemctl restart ip6tables
 
 # Grab interface name from ip link and parse 
 int_if1=$(ip link | grep -a "state " | awk -F: '{ if (FNR==2) print $2}')
@@ -133,7 +144,7 @@ host_ip2=$(ip addr | grep -a "scope global"|awk 'BEGIN  {FS="/"} {if (FNR==2) pr
 host_ip1v6=$(ip addr | grep -a "scope link"|awk 'BEGIN  {FS="/"} {if (FNR==1) print $1}'| awk '{print $2}')
 host_ip2v6=$(ip addr | grep -a "scope link"|awk 'BEGIN  {FS="/"} {if (FNR==2) print $1}'| awk '{print $2}')
 
-##################### INTERNAL VARIABLES
+#####################    INTERNAL VARIABLES  #########################################################
 
 int_mac1="$host_mac1"
 int_ip1="$host_ip1"   # set the ip of the machine
@@ -149,48 +160,38 @@ int_ip2v6="$host_ip2v6"
 #                              LINUX SECURITY BOOLEANS
 ###################################################################################################################################
 # Disable Source Routed Packets
-for f in /proc/sys/net/ipv4/conf/*/accept_source_route; do
-       echo 0 > $f
+# Disable Redirect Acceptance
+
+for f in $(ls /proc/sys/net/ipv4/conf/); do
+sysctl -w net.ipv4.conf.$f.rp_filter=1;
+sysctl -w net.ipv4.conf.$f.accept_source_route=0
+sysctl -w net.ipv4.conf.$f.accept_redirects=0
+sysctl -w net.ipv4.conf.$f.send_redirects=0
+sysctl -w net.ipv4.conf.$f.log_martians
 done
 
-# Disable ICMP Redirect Acceptance
-for f in /proc/sys/net/ipv4/conf/*/accept_redirects; do
-      echo 0 > $f
-done
 
-# Don't send Redirect Messages
-for f in /proc/sys/net/ipv4/conf/*/send_redirects; do
-     echo 0 > $f
-done
+sysctl -w net.ipv4.tcp_syncookies=1          # enable tcp syn cookies (prevent against the common 'syn flood attack')
+sysctl -w net.ipv4.ip_forward=0                                  # disable Packet forwarding between interfaces
+sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=1                 # ignore all ICMP ECHO and TIMESTAMP requests sent to it via broadcast/multicast
+sysctl -w net.ipv4.icmp_ignore_bogus_error_responses=1           # disable logging of bogus responses to broadcast frames
+sysctl -w net.ipv4.conf.all.log_martians=1                       # log packets with impossible addresses to kernel log
+sysctl -w net.ipv4.conf.all.rp_filter=1                          # do source validation by reversed path (Recommended option for single homed hosts)
+sysctl -w net.ipv4.conf.all.accept_source_route=0                # Disable source routed packets redirects
+sysctl -w net.ipv4.conf.all.accept_redirects=0                   # don't accept redirects
+sysctl -w net.ipv4.conf.all.send_redirects=0                     # don't send redirects
+sysctl -w net.ipv4.conf.all.accept_source_route=0                # don't accept packets with SRR option
 
-# Drop Spoofed Packets coming in on an interface, which if replied to,
-# would result in the reply going out a different interface.
-for f in /proc/sys/net/ipv4/conf/*/rp_filter; do
-     echo 1 > $f
-done
+sysctl -w net.ipv6.conf.all.accept_redirects=0                   # don't accept redirects
+sysctl -w net.ipv6.conf.all.accept_source_route=0                # don't accept packets with SRR option
+sysctl -w net.ipv4.conf.all.disable_ipv6=1                      # disable ipv6
 
-# Log packets with impossible addresses.
-for f in /proc/sys/net/ipv4/conf/*/log_martians; do
-     echo 1 > $f
-done
+sysctl -p  # load settings 
 
-echo 1 > /proc/sys/net/ipv4/tcp_syncookies                              # enable tcp syn cookies (prevent against the common 'syn flood attack')
-echo 0 > /proc/sys/net/ipv4/ip_forward                                  # disable Packet forwarding between interfaces
-echo 1 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts                 # ignore all ICMP ECHO and TIMESTAMP requests sent to it via broadcast/multicast
-echo 1 > /proc/sys/net/ipv4/icmp_ignore_bogus_error_responses           # disable logging of bogus responses to broadcast frames
-echo 1 > /proc/sys/net/ipv4/conf/all/log_martians                       # log packets with impossible addresses to kernel log
-echo 1 > /proc/sys/net/ipv4/conf/all/rp_filter                          # do source validation by reversed path (Recommended option for single homed hosts)
-echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route                # Disable source routed packets redirects
-echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects                   # don't accept redirects
-echo 0 > /proc/sys/net/ipv4/conf/all/send_redirects                     # don't send redirects
-echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route                # don't accept packets with SRR option
-
-echo 0 > /proc/sys/net/ipv6/conf/all/accept_redirects                   # don't accept redirects
-echo 0 > /proc/sys/net/ipv6/conf/all/accept_source_route                # don't accept packets with SRR option
-
-#echo 1 > /proc/sys/net/ipv4/conf/all/disable_ipv6                      # disable ipv6
 #setsebool httpd_can_network_connect on   #needed for squirelmail if you are on selinux
-#setsebool httpd_can_sendmail on          #needed for squirelmail send if you are selinux
+#setsebool httpd_can_sendmail on          #needed for squirelmail send if you are on selinux
+
+echo "SYSCTL SECURITY BOOLEANS LOADED"
 
 ###################################################################################################
 #                       IP SET CREATION 
@@ -218,8 +219,8 @@ echo HTTP/HTTPS BLACKLIST LOADING
 
 iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j DROP && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j DROP;
 iptables -I OUTPUT  -p tcp -s $int_ip1 -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL OUT] "  --log-level=info && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL OUT] "  --log-level=info 
-iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP && iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
-iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info && iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info;
+iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
+iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info;
 
 #iptables -I FORWARD  -p tcp -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP;
 #iptables -I FORWARD  -p tcp -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
@@ -237,8 +238,8 @@ echo SMTP BLACKLIST LOADING
 
 iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j DROP && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j DROP;
 iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL OUT] " --log-level=info && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL OUT] " --log-level=info; 
-iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP && iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
-iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info && iptables -I INPUT  27 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info 
+iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
+iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info 
 
 #iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP;
 #iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
@@ -255,9 +256,9 @@ echo SMTP BLACKLIST LOADED
 echo DNS BLACKLIST LOADING
 
 iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP && iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
-iptables -I INPUT  27 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT  27 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
+iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
 iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL UDP OUT] " --log-level=info && iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL UDP OUT] " --log-level=info; 
-iptables -I INPUT  27 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info && iptables -I INPUT  27 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info; 
+iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info && iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info; 
 
 #iptables -I FORWARD  -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP;
 #iptables -I FORWARD  -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
@@ -271,8 +272,8 @@ iptables -I INPUT  27 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src 
 
 iptables -I OUTPUT -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP && iptables -I OUTPUT -p tcp -s $int_ip1 -m set --match-set dns_blacklist dst --sport 53 -j DROP;
 iptables -I OUTPUT -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL TCP OUT] " --log-level=info && iptables -I OUTPUT -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL TCP OUT] " --log-level=info ;
-iptables -I INPUT 27 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT 27 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
-iptables -I INPUT 27 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info && iptables -I INPUT 27 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info ;
+iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
+iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info && iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info ;
 
 #iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP;
 #iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
@@ -288,8 +289,8 @@ echo DNS BLACKLIST LOADED
 
 echo ATTACKER BLACKLIST LOADING
 
-iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP && iptables -I INPUT 27 -p all -d $int_ip1 -m set --match-set attackers src -j DROP;
-iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER OUT] " --log-level=info && iptables -I INPUT 27 -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER IN] "  --log-level=info; 
+iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP && iptables -I INPUT 31 -p all -d $int_ip1 -m set --match-set attackers src -j DROP;
+iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER OUT] " --log-level=info && iptables -I INPUT 31 -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER IN] "  --log-level=info; 
 
 #iptables -I FORWARD  -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER FORWARD IN] "  --log-level=info && iptables -I FORWARD  -p all -d "$int_ip1" -m set --match-set attackers src -j DROP;
 #iptables -I FORWARD  -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER FORWARD OUT] "  --log-level=info && iptables -I FORWARD  -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP;
@@ -297,8 +298,8 @@ iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j LO
 echo ATTACKER BLACKLIST LOADED
 
 echo LOADING BLACKLIST 
-iptables -I OUTPUT   -p all -m set --match-set blacklist dst -j DROP && iptables -I INPUT 27 -p all -m set --match-set blacklist src -j DROP;
-iptables -I OUTPUT   -p all -m set --match-set blacklist dst -j LOG --log-prefix "[BLACKLIST OUT] "  --log-level=info && iptables -I INPUT 27 -p all -m set --match-set blacklist src -j LOG --log-prefix "[BLACKLIST IN] "  --log-level=info;
+iptables -I OUTPUT   -p all -m set --match-set blacklist dst -j DROP && iptables -I INPUT 31 -p all -m set --match-set blacklist src -j DROP;
+iptables -I OUTPUT   -p all -m set --match-set blacklist dst -j LOG --log-prefix "[BLACKLIST OUT] "  --log-level=info && iptables -I INPUT 31 -p all -m set --match-set blacklist src -j LOG --log-prefix "[BLACKLIST IN] "  --log-level=info;
 
 #iptables -I FORWARD  -p all -m set --match-set blacklist src -j DROP;
 #iptables -I FORWARD  -p all -m set --match-set blacklist dst -j DROP;
@@ -311,8 +312,8 @@ echo BLACKLIST LOADED
 
 echo LOADING IPv6 BLACKLIST 
 
-ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j DROP && ip6tables -I INPUT 27 -p all -m set --match-set ipv6_blacklist src -j DROP;
-ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j LOG --log-prefix "[IPv6-BLACKLIST OUT] " --log-level=info && ip6tables -I INPUT 27 -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST IN] "  --log-level=info; 
+ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j DROP && ip6tables -I INPUT 31 -p all -m set --match-set ipv6_blacklist src -j DROP;
+ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j LOG --log-prefix "[IPv6-BLACKLIST OUT] " --log-level=info && ip6tables -I INPUT 31 -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST IN] "  --log-level=info; 
 
 #ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist src -j DROP && ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist dst -j DROP;
 #ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST FORWARD IN] "  --log-level=info 
@@ -327,15 +328,15 @@ echo IPv6 BLACKLIST LOADED
 
 echo SMTP WHITELIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j ACCEPT && iptables -I INPUT 27  -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j ACCEPT; 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL OUT] " --log-level=info && iptables -I INPUT 27  -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL IN] " --log-level=info 
+iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j ACCEPT && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j ACCEPT; 
+iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL OUT] " --log-level=info && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL IN] " --log-level=info 
 
 echo SMTP WHITELIST LOADED
 
 echo HTTP/HTTPS WHITELIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j ACCEPT && iptables -I INPUT 27  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j ACCEPT;
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL OUT] " --log-level=info && iptables -I INPUT 27  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL IN] " --log-level=info 
+iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j ACCEPT && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j ACCEPT;
+iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL OUT] " --log-level=info && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL IN] " --log-level=info 
 
 echo HTTP/HTTPS WHITELIST LOADED
 
@@ -345,14 +346,11 @@ echo HTTP/HTTPS WHITELIST LOADED
 echo EMAIL BLACKLIST LOADING
 for blackout in $(cat email_blacklist.txt);
 do 
-(
-
-iptables -I INPUT 27  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP; 
-iptables -I INPUT 27  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] "--log-level=info && iptables -I OUTPUT -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info ;
+iptables -I INPUT 31  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP; 
+iptables -I INPUT 31  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] "--log-level=info && iptables -I OUTPUT -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info ;
 
 #iptables -I FORWARD -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP 
 #iptables -I FORWARD -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info 
-)
 echo "$blackout" ; 
 done 
 echo EMAIL BLACKLIST LOADED
@@ -360,14 +358,12 @@ echo EMAIL BLACKLIST LOADED
 echo HTML BLACKLIST LOADING
 for blackout in $(cat html_blacklist.txt);
 do 
-(
 
-iptables -I INPUT 27  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP; 
-iptables -I INPUT 27  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info && iptables -I OUTPUT  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info ;
+iptables -I INPUT 31  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP; 
+iptables -I INPUT 31  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info && iptables -I OUTPUT  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info ;
 
 #iptables -I FORWARD -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP 
 #iptables -I FORWARD -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info  
-)
 echo "$blackout" ; 
 done 
 echo HTML BLACKLIST LOADED
@@ -379,9 +375,7 @@ echo HTML BLACKLIST LOADED
 echo LOADING HTTP WHITELIST 
 for whiteout in $(cat http_whitelist.txt);
 do 
-(
 ipset add http_whitelist "$whiteout" 
-)
 echo "$whiteout" ; 
 done
 echo HTTP WHITELIST LOADED
@@ -389,9 +383,7 @@ echo HTTP WHITELIST LOADED
 echo LOADING SMTP WHITELIST 
 for whiteout in $(cat smtp_whitelist.txt);
 do 
-(
 ipset add smtp_whitelist "$whiteout" 
-)
 echo "$whiteout" ; 
 done
 echo SMTP WHITELIST LOADED
@@ -402,9 +394,7 @@ echo SMTP WHITELIST LOADED
 echo LOADING BLACKLIST 
 for blackout in $(cat blacklist.txt);
 do 
-(
 ipset add blacklist "$blackout" 
-)
 echo "$blackout" ; 
 done
 echo BLACKLIST LOADED
@@ -412,9 +402,7 @@ echo BLACKLIST LOADED
 echo LOADING IPv6 BLACKLIST 
 for blackout in $(cat ipv6_blacklist.txt);
 do 
-(
 ipset add ipv6_blacklist "$blackout" 
-)
 echo "$blackout" ; 
 done
 echo IPv6 BLACKLIST LOADED
@@ -422,9 +410,7 @@ echo IPv6 BLACKLIST LOADED
 echo LOADING HTTP BLACKLIST 
 for blackout in $(cat http_blacklist.txt);
 do 
-(
 ipset add http_blacklist "$blackout" 
-)
 echo "$blackout" ; 
 done
 echo HTTP BLACKLIST LOADED
@@ -432,9 +418,7 @@ echo HTTP BLACKLIST LOADED
 echo LOADING SMTP BLACKLIST 
 for blackout in $(cat smtp_blacklist.txt);
 do 
-(
 ipset add smtp_blacklist "$blackout" 
-)
 echo "$blackout" ; 
 done
 echo SMTP BLACKLIST LOADED
@@ -442,9 +426,7 @@ echo SMTP BLACKLIST LOADED
 echo LOADING ATTACKER BLACKLIST 
 for blackout in $(cat attackers.txt);
 do 
-(
 ipset add attackers "$blackout" 
-)
 echo "$blackout" ; 
 done
 echo ATTACKER BLACKLIST LOADED
@@ -452,24 +434,36 @@ echo ATTACKER BLACKLIST LOADED
 echo LOADING DNS BLACKLIST 
 for blackout in $(cat dns_blacklist.txt);
 do 
-(
 ipset add dns_blacklist "$blackout" 
-)
 echo "$blackout" ; 
 done
-echo DNS BLACKLIST LOADED
+echo "DNS BLACKLIST LOADED"
 #########################################
 
 echo "ENDSETS LOADED"
+################################  SAVE RULES    ##############################################################
+
+ipset save > /etc/ipset.conf
+
+
+iptables-save > /etc/iptables/iptables.rules
+ip6tables-save > /etc/iptables/ip6tables.rules
+
+iptables-save > /etc/iptables/rules.v4
+ip6tables-save > /etc/iptables/rules.v6
+
+iptables-save > /etc/iptables/iptables
+ip6tables-save > /etc/iptables/ip6tables
+
 ################################  PRINT RULES   ###############################################################
 #list the rules
 #iptables -L -v
 #ip6tables -L -v
 
 #############################   PRINT ADDRESSES  ############################################################
-echo GATEWAY  :          MAC:$gateway_mac  IP:$gateway_ip  
-echo INTERFACE_1: "$int_if1"  MAC:"$int_mac1"  IPv4:"$int_ip1" IPv6:"$int_ip1v6"
-echo INTERFACE_2: "$int_if2" MAC:"$int_mac2" IPv4:"$int_ip2" IPv6:"$int_ip2v6"
+echo "GATEWAY  :          MAC:$gateway_mac  IP:$gateway_ip  "
+echo "INTERFACE_1: "$int_if1"  MAC:"$int_mac1"  IPv4:"$int_ip1" IPv6:"$int_ip1v6" "
+echo "INTERFACE_2: "$int_if2" MAC:"$int_mac2" IPv4:"$int_ip2" IPv6:"$int_ip2v6" "
 # print the time the script finishes
 date
 
