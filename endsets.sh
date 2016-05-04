@@ -2,11 +2,12 @@
 ##################################################################
 # Program: endsets.sh
 # Type: Bourne shell script
+# Creation Date: February 12, 2016
 # Current Version: 1.21
-# Date: April 17 2016
-# Stable Version: 1.14
-# Date: February 17 2016
-# Author: Endwall Development Team 
+# Revision Date: May 05 2016
+# Stable Version: 1.21
+# Stable Version Date: April 17 2016
+# Author: The Endware Development Team 
 #
 # Description: Loads ipsets, blacklists and whitelists into iptables
 #              
