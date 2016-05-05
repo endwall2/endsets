@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 ##################################################################
 # Program: endsets.sh
 # Type: Bourne shell script
@@ -8,6 +8,7 @@
 # Stable Version: 1.21
 # Stable Version Date: April 17 2016
 # Author: The Endware Development Team 
+# Copyright: The Endware Development Team, 2016
 #
 # Description: Loads ipsets, blacklists and whitelists into iptables
 #              
