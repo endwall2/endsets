@@ -272,14 +272,13 @@ int_ip2v6="$host_ip2v6"
 ipset flush
 ipset destroy
 
-ipset create -exist blacklist hash:net hashsize 65536 
-ipset create -exist http_blacklist hash:net hashsize 65536   
-ipset create -exist smtp_blacklist hash:net hashsize 65536 
-ipset create -exist dns_blacklist hash:net hashsize 65536  
-ipset create -exist attackers hash:net hashsize 65536
-ipset create -exist http_whitelist hash:net hashsize 65536
-ipset create -exist smtp_whitelist hash:net hashsize 65536 
-ipset create -exist tor_list hash:net hashsize 65536 
+ipset create blacklist hash:net hashsize 65536 
+ipset create http_blacklist hash:net hashsize 65536   
+ipset create smtp_blacklist hash:net hashsize 65536 
+ipset create dns_blacklist hash:net hashsize 65536  
+ipset create attackers hash:net hashsize 65536
+ipset create http_whitelist hash:net hashsize 65536
+ipset create smtp_whitelist hash:net hashsize 65536 
 
 ipset create ipv6_blacklist hash:net family inet6 hashsize 65536
 
@@ -395,14 +394,6 @@ ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j LOG --log-
 
 echo IPv6 BLACKLIST LOADED
 
-echo TOR BLACKLIST LOADING
-
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set tor_list dst -m multiport --sports 25,80,443 -j DROP && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set  --match-set tor_list dst -m multiport --dports 25,80,443 -j DROP;
-iptables -I OUTPUT  -p tcp -s $int_ip1 -m set --match-set tor_list dst -m multiport --sports 25,80,443 -j LOG --log-prefix "[TOR-BL OUT] "  --log-level=info && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set tor_list dst -m multiport --dports 25,80,443 -j LOG --log-prefix "[TOR-BL OUT] "  --log-level=info 
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --dports 80,443 -j DROP && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --sports 25,80,443 -j DROP;
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --dports 25,80,443 -j LOG --log-prefix "[TOR-BL IN] " --log-level=info && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --sports 25,80,443 -j LOG --log-prefix "[TOR-BL IN] " --log-level=info;
-
-echo TOR BLACKLIST LOADED
 
 ####################################################################################
 #                    IP FILTER WHITE LISTS
