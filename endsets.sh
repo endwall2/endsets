@@ -3,7 +3,7 @@
 # Program: endsets.sh
 # Type: Bourne shell script
 # Creation Date: February 12, 2016
-# Current Version: 1.21
+# Current Version: 1.22
 # Revision Date: May 05 2016
 # Stable Version: 1.21
 # Stable Version Date: April 17 2016
@@ -18,7 +18,7 @@
 #         the ipset daemon, as this may cause your firewall to fail and reset in 
 #         an open policy state (no firewall).
 #        
-# Change Log: 
+# Change Log: - fixed insertion numbers
 #             - Added tor exit node grabber
 #             - Updated EULA
 #             - Added EULA
@@ -291,116 +291,116 @@ ipset flush
 
 echo HTTP/HTTPS BLACKLIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j DROP && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j DROP;
-iptables -I OUTPUT  -p tcp -s $int_ip1 -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL OUT] "  --log-level=info && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL OUT] "  --log-level=info 
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info;
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j DROP && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j DROP;
+iptables -I OUTPUT 51 -p tcp -s $int_ip1 -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL OUT] "  --log-level=info && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL OUT] "  --log-level=info 
+iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
+iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set http_blacklist src -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL IN] " --log-level=info;
 
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP;
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j DROP;
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j DROP;
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist src -m multiport --dports 80,443 -j DROP;
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist src -m multiport --sports 80,443 -j DROP;
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j DROP;
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j DROP;
 
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD IN] "  --log-level=info 
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist src -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD IN] "  --log-level=info 
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD OUT] " --log-level=info 
-#iptables -I FORWARD  -p tcp -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD IN] "  --log-level=info 
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist src -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD IN] "  --log-level=info 
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist dst -m multiport --sports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -m set --match-set http_blacklist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTP-BL FORWARD OUT] " --log-level=info 
 
 echo HTTP BLACKLIST LOADED
 
 echo SMTP BLACKLIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j DROP && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j DROP;
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL OUT] " --log-level=info && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL OUT] " --log-level=info; 
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info 
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j DROP && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j DROP;
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL OUT] " --log-level=info && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL OUT] " --log-level=info; 
+iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP && iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
+iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info && iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL IN] " --log-level=info 
 
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP;
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j DROP;
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j DROP;
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j DROP;
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j DROP;
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j DROP;
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j DROP;
 
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD OUT] " --log-level=info 
-#iptables -I FORWARD  -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set smtp_blacklist src -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --sports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -s "$int_ip1" -m set --match-set smtp_blacklist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-BL FORWARD OUT] " --log-level=info 
 
 echo SMTP BLACKLIST LOADED
 
 echo DNS BLACKLIST LOADING
 
-iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP && iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
-iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
-iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL UDP OUT] " --log-level=info && iptables -I OUTPUT  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL UDP OUT] " --log-level=info; 
-iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info && iptables -I INPUT  31 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info; 
+iptables -I OUTPUT 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP && iptables -I OUTPUT 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
+iptables -I INPUT  51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT  51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
+iptables -I OUTPUT 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL UDP OUT] " --log-level=info && iptables -I OUTPUT 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL UDP OUT] " --log-level=info; 
+iptables -I INPUT  51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info && iptables -I INPUT 51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL UDP IN] " --log-level=info; 
 
-#iptables -I FORWARD  -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP;
-#iptables -I FORWARD  -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
-#iptables -I FORWARD  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP;
-#iptables -I FORWARD  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
+#iptables -I FORWARD 51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP;
+#iptables -I FORWARD 51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
+#iptables -I FORWARD 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP;
+#iptables -I FORWARD 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
 
-#iptables -I FORWARD  -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD OUT] " --log-level=info 
-#iptables -I FORWARD  -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p udp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p udp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL UDP FORWARD OUT] " --log-level=info 
 
-iptables -I OUTPUT -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP && iptables -I OUTPUT -p tcp -s $int_ip1 -m set --match-set dns_blacklist dst --sport 53 -j DROP;
-iptables -I OUTPUT -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL TCP OUT] " --log-level=info && iptables -I OUTPUT -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL TCP OUT] " --log-level=info ;
-iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
-iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info && iptables -I INPUT 31 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info ;
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP && iptables -I OUTPUT 51 -p tcp -s $int_ip1 -m set --match-set dns_blacklist dst --sport 53 -j DROP;
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL TCP OUT] " --log-level=info && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL TCP OUT] " --log-level=info ;
+iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
+iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL TCP IN] " --log-level=info ;
 
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP;
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
-#iptables -I FORWARD  -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP;
-#iptables -I FORWARD  -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j DROP;
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j DROP;
+#iptables -I FORWARD 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j DROP;
+#iptables -I FORWARD 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j DROP;
 
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD OUT] " --log-level=info 
-#iptables -I FORWARD  -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --dport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -d "$int_ip1" -m set --match-set dns_blacklist src --sport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --dport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD OUT] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp -s "$int_ip1" -m set --match-set dns_blacklist dst --sport 53 -j LOG --log-prefix "[DNS-BL TCP FORWARD OUT] " --log-level=info 
 
 echo DNS BLACKLIST LOADED
 
 echo ATTACKER BLACKLIST LOADING
 
-iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP && iptables -I INPUT 31 -p all -d $int_ip1 -m set --match-set attackers src -j DROP;
-iptables -I OUTPUT   -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER OUT] " --log-level=info && iptables -I INPUT 31 -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER IN] "  --log-level=info; 
+iptables -I OUTPUT 51 -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP && iptables -I INPUT 51 -p all -d $int_ip1 -m set --match-set attackers src -j DROP;
+iptables -I OUTPUT 51  -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER OUT] " --log-level=info && iptables -I INPUT 51 -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER IN] "  --log-level=info; 
 
-#iptables -I FORWARD  -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER FORWARD IN] "  --log-level=info && iptables -I FORWARD  -p all -d "$int_ip1" -m set --match-set attackers src -j DROP;
-#iptables -I FORWARD  -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER FORWARD OUT] "  --log-level=info && iptables -I FORWARD  -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP;
+#iptables -I FORWARD 51 -p all -d "$int_ip1" -m set --match-set attackers src -j LOG --log-prefix "[ATTACKER FORWARD IN] " --log-level=info && iptables -I FORWARD 51 -p all -d "$int_ip1" -m set --match-set attackers src -j DROP;
+#iptables -I FORWARD 51 -p all -s "$int_ip1" -m set --match-set attackers dst -j LOG --log-prefix "[ATTACKER FORWARD OUT] " --log-level=info && iptables -I FORWARD 51 -p all -s "$int_ip1" -m set --match-set attackers dst -j DROP;
 
 echo ATTACKER BLACKLIST LOADED
 
 echo LOADING BLACKLIST 
-iptables -I OUTPUT   -p all -m set --match-set blacklist dst -j DROP && iptables -I INPUT 31 -p all -m set --match-set blacklist src -j DROP;
-iptables -I OUTPUT   -p all -m set --match-set blacklist dst -j LOG --log-prefix "[BLACKLIST OUT] "  --log-level=info && iptables -I INPUT 31 -p all -m set --match-set blacklist src -j LOG --log-prefix "[BLACKLIST IN] "  --log-level=info;
+iptables -I OUTPUT 51 -p all -m set --match-set blacklist dst -j DROP && iptables -I INPUT 51 -p all -m set --match-set blacklist src -j DROP;
+iptables -I OUTPUT 51 -p all -m set --match-set blacklist dst -j LOG --log-prefix "[BLACKLIST OUT] " --log-level=info && iptables -I INPUT 51 -p all -m set --match-set blacklist src -j LOG --log-prefix "[BLACKLIST IN] " --log-level=info;
 
-#iptables -I FORWARD  -p all -m set --match-set blacklist src -j DROP;
-#iptables -I FORWARD  -p all -m set --match-set blacklist dst -j DROP;
+#iptables -I FORWARD 51 -p all -m set --match-set blacklist src -j DROP;
+#iptables -I FORWARD 51 -p all -m set --match-set blacklist dst -j DROP;
 
-#iptables -I FORWARD  -p all -m set --match-set blacklist src -j LOG --log-prefix "[BLACKLIST FORWARD IN] " --log-level=info 
-#iptables -I FORWARD  -p all -m set --match-set blacklist dst -j LOG --log-prefix "[BLACKLIST FORWARD OUT] "  --log-level=info 
+#iptables -I FORWARD 51 -p all -m set --match-set blacklist src -j LOG --log-prefix "[BLACKLIST FORWARD IN] " --log-level=info 
+#iptables -I FORWARD 51 -p all -m set --match-set blacklist dst -j LOG --log-prefix "[BLACKLIST FORWARD OUT] "  --log-level=info 
 
 echo BLACKLIST LOADED
 
 
 echo LOADING IPv6 BLACKLIST 
 
-ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j DROP && ip6tables -I INPUT 31 -p all -m set --match-set ipv6_blacklist src -j DROP;
-ip6tables -I OUTPUT   -p all -m set --match-set ipv6_blacklist dst -j LOG --log-prefix "[IPv6-BLACKLIST OUT] " --log-level=info && ip6tables -I INPUT 31 -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST IN] "  --log-level=info; 
+ip6tables -I OUTPUT 34 -p all -m set --match-set ipv6_blacklist dst -j DROP && ip6tables -I INPUT 34 -p all -m set --match-set ipv6_blacklist src -j DROP;
+ip6tables -I OUTPUT 34  -p all -m set --match-set ipv6_blacklist dst -j LOG --log-prefix "[IPv6-BLACKLIST OUT] " --log-level=info && ip6tables -I INPUT 34 -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST IN] "  --log-level=info; 
 
-#ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist src -j DROP && ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist dst -j DROP;
-#ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST FORWARD IN] "  --log-level=info 
-#ip6tables -I FORWARD  -p all -m set --match-set ipv6_blacklist dst -j LOG --log-prefix "[IPv6-BLACKLIST FORWARD OUT] "  --log-level=info 
+#ip6tables -I FORWARD 34 -p all -m set --match-set ipv6_blacklist src -j DROP && ip6tables -I FORWARD 34 -p all -m set --match-set ipv6_blacklist dst -j DROP;
+#ip6tables -I FORWARD 34 -p all -m set --match-set ipv6_blacklist src -j LOG --log-prefix "[IPv6-BLACKLIST FORWARD IN] "  --log-level=info 
+#ip6tables -I FORWARD 34 -p all -m set --match-set ipv6_blacklist dst -j LOG --log-prefix "[IPv6-BLACKLIST FORWARD OUT] "  --log-level=info 
 
 echo IPv6 BLACKLIST LOADED
 
 echo TOR BLACKLIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set tor_list dst -m multiport --sports 25,80,443 -j DROP && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set  --match-set tor_list dst -m multiport --dports 25,80,443 -j DROP;
-iptables -I OUTPUT  -p tcp -s $int_ip1 -m set --match-set tor_list dst -m multiport --sports 25,80,443 -j LOG --log-prefix "[TOR-BL OUT] "  --log-level=info && iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set tor_list dst -m multiport --dports 25,80,443 -j LOG --log-prefix "[TOR-BL OUT] "  --log-level=info 
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --dports 80,443 -j DROP && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --sports 25,80,443 -j DROP;
-iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --dports 25,80,443 -j LOG --log-prefix "[TOR-BL IN] " --log-level=info && iptables -I INPUT  31 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --sports 25,80,443 -j LOG --log-prefix "[TOR-BL IN] " --log-level=info;
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set tor_list dst -m multiport --sports 25,80,443 -j DROP && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set  --match-set tor_list dst -m multiport --dports 25,80,443 -j DROP;
+iptables -I OUTPUT 51 -p tcp -s $int_ip1 -m set --match-set tor_list dst -m multiport --sports 25,80,443 -j LOG --log-prefix "[TOR-BL OUT] "  --log-level=info && iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set tor_list dst -m multiport --dports 25,80,443 -j LOG --log-prefix "[TOR-BL OUT] "  --log-level=info 
+iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --dports 80,443 -j DROP && iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --sports 25,80,443 -j DROP;
+iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --dports 25,80,443 -j LOG --log-prefix "[TOR-BL IN] " --log-level=info && iptables -I INPUT  51 -p tcp -d "$int_ip1" -m set --match-set tor_list src -m multiport --sports 25,80,443 -j LOG --log-prefix "[TOR-BL IN] " --log-level=info;
 
 echo TOR BLACKLIST LOADED
 
@@ -410,15 +410,15 @@ echo TOR BLACKLIST LOADED
 
 echo SMTP WHITELIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j ACCEPT && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j ACCEPT; 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL OUT] " --log-level=info && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL IN] " --log-level=info 
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j ACCEPT && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j ACCEPT; 
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set smtp_whitelist dst -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL OUT] " --log-level=info && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set smtp_whitelist src -m multiport --dports 25,587 -j LOG --log-prefix "[SMTP-WL IN] " --log-level=info 
 
 echo SMTP WHITELIST LOADED
 
 echo HTTP/HTTPS WHITELIST LOADING
 
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j ACCEPT && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j ACCEPT;
-iptables -I OUTPUT  -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL OUT] " --log-level=info && iptables -I INPUT 31  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL IN] " --log-level=info 
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j ACCEPT && iptables -I INPUT 51 -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j ACCEPT;
+iptables -I OUTPUT 51 -p tcp -s "$int_ip1" -m set --match-set http_whitelist dst -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL OUT] " --log-level=info && iptables -I INPUT 51  -p tcp -d "$int_ip1" -m set --match-set http_whitelist src -m multiport --dports 80,443 -j LOG --log-prefix "[HTTPS-WL IN] " --log-level=info 
 
 echo HTTP/HTTPS WHITELIST LOADED
 
@@ -428,11 +428,11 @@ echo HTTP/HTTPS WHITELIST LOADED
 echo EMAIL BLACKLIST LOADING
 for blackout in $(cat email_blacklist.txt);
 do 
-iptables -I INPUT 31  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP; 
-iptables -I INPUT 31  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] "--log-level=info && iptables -I OUTPUT -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info ;
+iptables -I INPUT 51  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT 51 -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP; 
+iptables -I INPUT 51  -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] "--log-level=info && iptables -I OUTPUT 51 -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info ;
 
-#iptables -I FORWARD -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP 
-#iptables -I FORWARD -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info 
+#iptables -I FORWARD 51 -p tcp --dport 25 -m string --string "$blackout" --algo bm -j DROP 
+#iptables -I FORWARD 51 -p tcp --dport 25 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[EMAIL SPAM] " --log-level=info 
 echo "$blackout" ; 
 done 
 echo EMAIL BLACKLIST LOADED
@@ -441,11 +441,11 @@ echo HTML BLACKLIST LOADING
 for blackout in $(cat html_blacklist.txt);
 do 
 
-iptables -I INPUT 31  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP; 
-iptables -I INPUT 31  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info && iptables -I OUTPUT  -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info ;
+iptables -I INPUT 51 -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP && iptables -I OUTPUT 51 -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP; 
+iptables -I INPUT 51 -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info && iptables -I OUTPUT 51 -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info ;
 
-#iptables -I FORWARD -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP 
-#iptables -I FORWARD -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info  
+#iptables -I FORWARD 51 -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j DROP 
+#iptables -I FORWARD 51 -p tcp -m multiport --dports 80,443 -m string --string "$blackout" --algo bm -j LOG --log-prefix "[HTTP SPAM] " --log-level=info  
 echo "$blackout" ; 
 done 
 echo HTML BLACKLIST LOADED
@@ -561,14 +561,3 @@ echo "INTERFACE_1: "$int_if1"  MAC:"$int_mac1"  IPv4:"$int_ip1" IPv6:"$int_ip1v6
 echo "INTERFACE_2: "$int_if2" MAC:"$int_mac2" IPv4:"$int_ip2" IPv6:"$int_ip2v6" "
 # print the time the script finishes
 date
-
-
-
-
-
-
-
-
-
-
-
