@@ -18,7 +18,8 @@
 #         the ipset daemon, as this may cause your firewall to fail and reset in 
 #         an open policy state (no firewall).
 #        
-# Change Log: - Changed hash size and maxelem (I think this might solve return ip after ban bug)
+# Change Log: - sort -un on tor nodes
+#             - Changed hash size and maxelem (I think this might solve return ip after ban bug)
 #             - Updated EULA
 #             - Annotated Beginning and End of Program
 #             - Fixed insertion numbers
@@ -453,7 +454,7 @@ echo HTML BLACKLIST LOADED
 ########################################
 #          TOR EXIT NODES
 #########################################
-curl https://check.torproject.org/exit-addresses | grep -ah "ExitAddresses" | awk '{print $2}' > tor_exit.txt
+curl https://check.torproject.org/exit-addresses | grep -ah "ExitAddresses" | awk '{print $2}' | sort -un > tor_exit.txt
 
 # format for cidr
 for tor_ip in $( cat tor_exit.txt )
