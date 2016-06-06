@@ -4,7 +4,7 @@
 # Type: Bourne shell script
 # Creation Date: February 12, 2016
 # Current Version: 1.25
-# Revision Date: June 5 2016
+# Revision Date: June 6 2016
 # Stable Version: 1.22
 # Stable Version Date: May 05 2016
 # Author: The Endware Development Team 
@@ -18,7 +18,8 @@
 #         the ipset daemon, as this may cause your firewall to fail and reset in 
 #         an open policy state (no firewall).
 #        
-# Change Log: - Updated EULA
+# Change Log: - Changed hash size and maxelem (I think this might solve return ip after ban bug)
+#             - Updated EULA
 #             - Annotated Beginning and End of Program
 #             - Fixed insertion numbers
 #             - Added tor exit node grabber
@@ -271,16 +272,16 @@ int_ip2v6="$host_ip2v6"
 ipset flush
 ipset destroy
 
-ipset create -exist blacklist hash:net hashsize 65536 
-ipset create -exist http_blacklist hash:net hashsize 65536   
-ipset create -exist smtp_blacklist hash:net hashsize 65536 
-ipset create -exist dns_blacklist hash:net hashsize 65536  
-ipset create -exist attackers hash:net hashsize 65536
-ipset create -exist http_whitelist hash:net hashsize 65536
-ipset create -exist smtp_whitelist hash:net hashsize 65536 
-ipset create -exist tor_list hash:net hashsize 65536 
+ipset create -exist blacklist hash:net hashsize 8192 maxelem 4294967295
+ipset create -exist http_blacklist hash:net hashsize 8192   maxelem 4294967295
+ipset create -exist smtp_blacklist hash:net hashsize 8192 maxelem 4294967295
+ipset create -exist dns_blacklist hash:net hashsize 8192  maxelem 4294967295
+ipset create -exist attackers hash:net hashsize 8192 maxelem 4294967295
+ipset create -exist http_whitelist hash:net hashsize 8192 maxelem 4294967295
+ipset create -exist smtp_whitelist hash:net hashsize 8192 maxelem 4294967295
+ipset create -exist tor_list hash:net hashsize 8192 maxelem 4294967295
 
-ipset create ipv6_blacklist hash:net family inet6 hashsize 65536
+ipset create ipv6_blacklist hash:net family inet6 hashsize 8192 maxelem 4294967295
 
 ipset flush
 
