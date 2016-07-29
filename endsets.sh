@@ -107,6 +107,14 @@
 # # ipset add http_whitelist 198.252.153.0/24
 # # ipset add smtp_whitelist 198.252.153.0/24
 #
+#  Made a mistake and want to remove number from blacklist or whitelist
+# # ipset del http_blacklist 152.41.31.158
+#
+#  List all members of a set and search for a specific block range
+#
+# # ipset list http_blacklist
+# # ipset list http_blacklist | grep 113.205.0.0/16
+#
 ################################################################################################
 #                          ENABLE IPTABLES/IP6TABLES 
 #################################################################################################
