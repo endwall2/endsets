@@ -400,9 +400,7 @@ ports=$3
 tag=$4
 
 iptables -I OUTPUT "$insert_out" -p "$proto" -s "$int_ip" -m set --match-set "$set" dst -m multiport --dports "$ports" -j ACCEPT && iptables -I INPUT "$insert_in" -p "$proto" -d "$int_ip" -m set --match-set "$set" src -m multiport --dports "$ports" -j ACCEPT;
-iptables -I OUTPUT "$insert_out" -p "$proto" -s "$int_ip" -m set --match-set "$set" dst -m multiport --dports "$ports" -j LOG --log-prefix "["$tag" OUT] " --log-level=info && iptables -I INPUT "$insert_in" -p "$proto" -d "$int_ip" -m set --match-set "$set" src -m multiport --dports "$ports" -j LOG --log-prefix "["$tag" IN] " --log-le
-
-vel=info 
+iptables -I OUTPUT "$insert_out" -p "$proto" -s "$int_ip" -m set --match-set "$set" dst -m multiport --dports "$ports" -j LOG --log-prefix "["$tag" OUT] " --log-level=info && iptables -I INPUT "$insert_in" -p "$proto" -d "$int_ip" -m set --match-set "$set" src -m multiport --dports "$ports" -j LOG --log-prefix "["$tag" IN] " --log-level=info 
 }
 
 
